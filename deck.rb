@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-import_relative './card'
+require_relative './card'
 
 class Deck
   SUITS = %w[clubs diamonds hearts spades].freeze

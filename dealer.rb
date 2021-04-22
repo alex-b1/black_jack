@@ -1,14 +1,8 @@
 # frozen_string_literal: true
 
-import_relative './bank.js'
+require_relative './bank.js'
+require_relative './player.js'
 
-class Dealer
-  attr_reader :name, :bank
-  attr_accessor :balance
+class Dealer < Player
 
-  def initialize(name = 'Dealer')
-    @name = name
-    @bank = Bank.new
-    @balance = bank.balance
-  end
 end
