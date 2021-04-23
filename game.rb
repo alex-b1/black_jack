@@ -7,16 +7,16 @@ require_relative './deck'
 require_relative './bank'
 
 class Game
+  include Helper
   MAX_COUNT = 21
 
-  include Helper
-  attr_reader :user, :dealer, :deck, :bank, :balance
+  attr_reader :user, :dealer, :deck, :bank
 
   def initialize
     @command_list = {
-      1 => { title: 'Пропустить', command: lambda { |i| pass } },
-      2 => { title: 'Добавить карту', command: lambda { |i| add_card i } },
-      3 => { title: 'Открыть карты', command: lambda { |i| open_cards } },
+      1 => { title: 'Пропустить', command: proc { pass } },
+      2 => { title: 'Добавить карту', command: proc { |i| add_card i } },
+      3 => { title: 'Открыть карты', command: proc { open_cards } },
     }
   end
 
@@ -28,7 +28,7 @@ class Game
     @deck = Deck.new
     @deck.cards.shuffle!
     @bank = Bank.new
-    @balance = bank.balance
+
     start
   end
 
@@ -40,7 +40,7 @@ class Game
 
       loop do
         break if check_cards_length
-        break if user_actions
+        break if user_actions == 3
         dealer_actions
         show_cards
       rescue StandardError => e
@@ -57,10 +57,10 @@ class Game
   end
 
   def show_cards
-    print "Ваши карты: "
+    puts "Ваши карты: "
     user.cards.each { |i| print "#{i.suit}-#{i.value} "}
-    print "\nКарты дилера: "
-    dealer.cards.each { |i| print "* " }
+    puts "\nКарты дилера: "
+    dealer.cards.each { print "* " }
     print "\n"
   end
 
@@ -72,9 +72,7 @@ class Game
     show_tasks
     task_number = task
     @command_list[task_number][:command].call(user)
-    if task_number == 3
-      true
-    end
+    task_number
   end
 
   def dealer_actions
@@ -87,19 +85,13 @@ class Game
 
   def show_tasks
     puts 'Введите действие : '
-    @command_list.each do |k, v|
-      puts "#{k} - #{v[:title]}"
-    end
-  end
-
-  def task
-    gets.chomp.to_i
+    @command_list.each { |k, v| puts "#{k} - #{v[:title]}" }
   end
 
   def issue_cards
     user.cards = @deck.cards.slice!(0, 2)
-    user.calculate_count
     dealer.cards = @deck.cards.slice!(0, 2)
+    user.calculate_count
     dealer.calculate_count
   end
 
@@ -115,7 +107,7 @@ class Game
   end
 
   def add_card(player)
-    if !validate_cards_length(player)
+    unless validate_cards_length(player)
       card = @deck.cards.slice!(0, 1)
       player.cards.concat(card)
     end
@@ -145,19 +137,6 @@ class Game
     else
       puts 'Выграл дилер'
       dealer.bank.put_in(20)
-    end
-  end
-
-  def continue
-    puts 'нажмите любую клавишу чтобы продолжить'
-    gets
-  end
-
-  def clear
-    if Gem.win_platform?
-      system 'cls'
-    else
-      system 'clear'
     end
   end
 
