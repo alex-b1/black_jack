@@ -115,7 +115,10 @@ class Game
   end
 
   def add_card(player)
-    player.cards.concat(@deck.cards.slice!(0, 1)) if validate_cards_length(player)
+    if !validate_cards_length(player)
+      card = @deck.cards.slice!(0, 1)
+      player.cards.concat(card)
+    end
     player.calculate_count
   end
 
@@ -124,11 +127,11 @@ class Game
     dealer_count = dealer.count
     puts "Сумма очков у вам: #{user_count}"
     puts "Сумма очков у дилера: #{dealer_count}"
+    [user_count, dealer_count]
   end
 
   def calculate_result
-    user_count = user.count
-    dealer_count = dealer.count
+    user_count, dealer_count = open_cards
     if user_count > MAX_COUNT
       puts 'Вы проиграли'
       dealer.bank.put_in(20)
@@ -145,16 +148,6 @@ class Game
     end
   end
 
-  def validate_cards_length(player)
-    raise 'Должно быть 2 карты на руках' if player.cards.length > 2
-    true
-  end
-
-  def validate_cards_count(player)
-    raise 'Должно быть 17 или более очков' if player.count > 17
-    true
-  end
-
   def continue
     puts 'нажмите любую клавишу чтобы продолжить'
     gets
@@ -166,6 +159,14 @@ class Game
     else
       system 'clear'
     end
+  end
+
+  def validate_cards_length(player)
+    player.cards.length > 2
+  end
+
+  def validate_cards_count(player)
+    player.count >= 17
   end
 end
 
