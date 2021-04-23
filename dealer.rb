@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require_relative './bank.js'
-require_relative './player.js'
+require_relative './player'
 
 class Dealer < Player
   TYPE = :dealer

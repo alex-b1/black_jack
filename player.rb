@@ -1,11 +1,14 @@
+
+
 class Player
+
   attr_reader :name, :bank, :count
-  attr_accessor :balance, :cards,
+  attr_accessor :balance, :cards
 
   def initialize(name = 'Dealer')
     @name = name
     @bank = Bank.new(100)
-    @balance = bank.balance
+    @balance = @bank.balance
     @cards = []
   end
 
@@ -18,7 +21,7 @@ class Player
       elsif i.value == 'A' && t > 10
         t += 11
       else
-        t += i.to_i
+        t += i.value.to_i
       end
       t
     end

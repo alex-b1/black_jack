@@ -18,7 +18,7 @@ class Deck
     cards = []
     SUITS.each do |i|
       VALUES.each do |j|
-        card_list.push(Card.new(i, j))
+        cards.push(Card.new(i, j))
       end
     end
     cards
