@@ -5,9 +5,12 @@ require_relative './dealer'
 require_relative './helper'
 require_relative './deck'
 require_relative './bank'
+require_relative './validations'
 
 class Game
+  include Validations
   include Helper
+
   MAX_COUNT = 21
 
   attr_reader :user, :dealer, :deck, :bank
@@ -53,6 +56,13 @@ class Game
       play_again = string
       break if play_again != 'да'
       clear
+
+      rescue StandardError => e
+        puts "#{e.message}"
+        puts "Начать игру заново?: (да/нет)"
+        replay = string
+        init if replay == 'да'
+        break
     end
   end
 
@@ -89,15 +99,28 @@ class Game
   end
 
   def issue_cards
-    user.cards = @deck.cards.slice!(0, 2)
-    dealer.cards = @deck.cards.slice!(0, 2)
-    user.calculate_count
-    dealer.calculate_count
+    if validate_deck(@deck, 4)
+      user.cards = @deck.cards.slice!(0, 2)
+      dealer.cards = @deck.cards.slice!(0, 2)
+      user.calculate_count
+      dealer.calculate_count
+    else
+      raise "В колоде недостаточно карт"
+    end
   end
 
   def place_bet
-    user.bank.withdraw(10)
-    dealer.bank.withdraw(10)
+    if validate_balance user
+      user.bank.withdraw(10)
+    else
+      raise "У Вас закочились деньги"
+    end
+
+    if validate_balance dealer
+      dealer.bank.withdraw(10)
+    else
+      raise "У дилера закончились деньги"
+    end
 
     bank.put_in(20)
   end
@@ -108,8 +131,12 @@ class Game
 
   def add_card(player)
     unless validate_cards_length(player)
-      card = @deck.cards.slice!(0, 1)
-      player.cards.concat(card)
+      if validate_deck(@deck, 1)
+        card = @deck.cards.slice!(0, 1)
+        player.cards.concat(card)
+      else
+        raise "В колоде недостаточно карт"
+      end
     end
     player.calculate_count
   end
@@ -138,14 +165,6 @@ class Game
       puts 'Выграл дилер'
       dealer.bank.put_in(20)
     end
-  end
-
-  def validate_cards_length(player)
-    player.cards.length > 2
-  end
-
-  def validate_cards_count(player)
-    player.count >= 17
   end
 end
 
