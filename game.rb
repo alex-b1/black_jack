@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
-require_relative './user'
+require_relative './validations'
+require_relative './interface'
 require_relative './dealer'
 require_relative './helper'
 require_relative './deck'
+require_relative './user'
 require_relative './bank'
-require_relative './validations'
+require_relative './hand'
 
 class Game
   include Validations
@@ -13,18 +15,18 @@ class Game
 
   MAX_COUNT = 21
 
-  attr_reader :user, :dealer, :deck, :bank
+  attr_reader :user, :dealer, :deck, :bank, :hand
 
   def initialize
     @command_list = {
-      1 => { title: 'Пропустить', command: proc { pass } },
-      2 => { title: 'Добавить карту', command: proc { |i| add_card i } },
-      3 => { title: 'Открыть карты', command: proc { open_cards } },
+      1 => { title: Interface.task(1), command: proc { pass } },
+      2 => { title: Interface.task(2), command: proc { |i| add_card i } },
+      3 => { title: Interface.task(3), command: proc { open_cards } },
     }
   end
 
   def init
-    print 'Ведите ваше имя: '
+    Interface.name
     name = string
     @user = User.new(name)
     @dealer = Dealer.new
@@ -37,45 +39,34 @@ class Game
 
   def start
     loop do
+      @hand = Hand.new(@user, @dealer)
       issue_cards
       place_bet
-      show_cards
+      Interface.show_cards(hand)
 
       loop do
         break if check_cards_length
         break if user_actions == 3
         dealer_actions
-        show_cards
+        Interface.show_cards(hand)
       rescue StandardError => e
-        puts "Ошибка: #{e.message}"
+        Interface.error(e)
         continue
       end
 
       calculate_result
-      puts "Хотите сыграть еще раз: (да/нет)"
-      play_again = string
-      break if play_again != 'да'
+      break if Interface.repeat
       clear
 
       rescue StandardError => e
-        puts "#{e.message}"
-        puts "Начать игру заново?: (да/нет)"
-        replay = string
-        init if replay == 'да'
+        Interface.error(e)
+        init if Interface.replay
         break
     end
   end
 
-  def show_cards
-    puts "Ваши карты: "
-    user.cards.each { |i| print "#{i.suit}-#{i.value} "}
-    puts "\nКарты дилера: "
-    dealer.cards.each { print "* " }
-    print "\n"
-  end
-
   def check_cards_length
-    user.cards.length == 3 && user.cards.length == 3
+    hand.check_length
   end
 
   def user_actions
@@ -86,7 +77,7 @@ class Game
   end
 
   def dealer_actions
-    if validate_cards_count dealer
+    if validate_cards_count hand.dealer
       pass
     else
       add_card dealer
@@ -94,18 +85,17 @@ class Game
   end
 
   def show_tasks
-    puts 'Введите действие : '
+    Interface.action
     @command_list.each { |k, v| puts "#{k} - #{v[:title]}" }
   end
 
   def issue_cards
     if validate_deck(@deck, 4)
-      user.cards = @deck.cards.slice!(0, 2)
-      dealer.cards = @deck.cards.slice!(0, 2)
-      user.calculate_count
-      dealer.calculate_count
+      hand.user[:cards].concat(@deck.cards.slice!(0, 2))
+      hand.dealer[:cards].concat(@deck.cards.slice!(0, 2))
+      hand.calculate_count
     else
-      raise "В колоде недостаточно карт"
+      raise Interface.no_card
     end
   end
 
@@ -113,13 +103,13 @@ class Game
     if validate_balance user
       user.bank.withdraw(10)
     else
-      raise "У Вас закочились деньги"
+      raise Interface.no_user_money
     end
 
     if validate_balance dealer
       dealer.bank.withdraw(10)
     else
-      raise "У дилера закончились деньги"
+      raise Interface.no_dealer_money
     end
 
     bank.put_in(20)
@@ -130,39 +120,38 @@ class Game
   end
 
   def add_card(player)
-    unless validate_cards_length(player)
+    hand_player = hand.send player.type
+    unless validate_cards_length(hand_player)
       if validate_deck(@deck, 1)
         card = @deck.cards.slice!(0, 1)
-        player.cards.concat(card)
+        hand.add_card(player.type, card)
       else
-        raise "В колоде недостаточно карт"
+        raise Interface.no_cards
       end
     end
-    player.calculate_count
+    hand.calculate_count
   end
 
   def open_cards
-    user_count = user.count
-    dealer_count = dealer.count
-    puts "Сумма очков у вам: #{user_count}"
-    puts "Сумма очков у дилера: #{dealer_count}"
-    [user_count, dealer_count]
+    Interface.count hand.user
+    Interface.count hand.dealer
+    [hand.user[:count], hand.dealer[:count]]
   end
 
   def calculate_result
     user_count, dealer_count = open_cards
     if user_count > MAX_COUNT
-      puts 'Вы проиграли'
+      Interface.defeat
       dealer.bank.put_in(20)
     elsif user_count == dealer_count
-      puts 'Ничья'
+      Interface.draw
       user.bank.put_in(10)
       dealer.bank.put_in(10)
-    elsif user_count > dealer_count
-      puts 'Вы выграли'
+    elsif (user_count > dealer_count) || (dealer_count > MAX_COUNT)
+      Interface.win
       user.bank.put_in(10)
     else
-      puts 'Выграл дилер'
+      Interface.defeat
       dealer.bank.put_in(20)
     end
   end

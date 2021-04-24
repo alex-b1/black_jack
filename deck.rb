@@ -3,9 +3,6 @@
 require_relative './card'
 
 class Deck
-  SUITS = %w[clubs diamonds hearts spades].freeze
-  VALUES = %w[2 3 4 5 6 7 8 9 10 J Q K A].freeze
-
   attr_reader :cards
 
   def initialize
@@ -16,8 +13,8 @@ class Deck
 
   def get_cards
     cards = []
-    SUITS.each do |i|
-      VALUES.each do |j|
+    Card.suits.each do |i|
+      Card.values.each do |j|
         cards.push(Card.new(i, j))
       end
     end

@@ -1,14 +1,16 @@
+# frozen_string_literal: true
+
 module Validations
   def validate_cards_length(player)
-    player.cards.length > 2
+    player[:cards].length > 2
   end
 
   def validate_cards_count(player)
-    player.count >= 17
+    player[:count] >= 17
   end
 
   def validate_balance(player)
-    player.bank.balance > 0
+    player.bank.balance.positive?
   end
 
   def validate_deck(deck, length)
