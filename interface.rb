@@ -43,7 +43,7 @@ class Interface
     end
 
     def count(hand, player)
-      puts "Сумма очков у #{player.name}: #{hand.count}"
+      puts "Сумма очков у #{player.name}: #{hand.calculate_count}"
     end
 
     def win

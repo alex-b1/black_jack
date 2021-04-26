@@ -5,8 +5,8 @@ module Validations
     hand.cards.length > 2
   end
 
-  def validate_cards_count(hand)
-    hand.count >= 17
+  def validate_cards_count(count)
+    count >= 17
   end
 
   def validate_balance(player)

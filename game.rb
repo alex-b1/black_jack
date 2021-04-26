@@ -80,7 +80,7 @@ class Game
   end
 
   def dealer_actions
-    if validate_cards_count dealer_hand
+    if validate_cards_count dealer_hand.calculate_count
       pass
     else
       add_card dealer
@@ -96,8 +96,6 @@ class Game
     if validate_deck(@deck, 4)
       user_hand.add_cards(@deck.cards.slice!(0, 2))
       dealer_hand.add_cards(@deck.cards.slice!(0, 2))
-      user_hand.calculate_count
-      dealer_hand.calculate_count
     else
       raise Interface.no_card
     end
@@ -133,13 +131,12 @@ class Game
         raise Interface.no_cards
       end
     end
-    hand.calculate_count
   end
 
   def open_cards
     Interface.count user_hand, user
     Interface.count dealer_hand, dealer
-    [user_hand.count, dealer_hand.count]
+    [user_hand.calculate_count, dealer_hand.calculate_count]
   end
 
   def calculate_result

@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 class Hand
-  attr_accessor :cards, :count
+  attr_accessor :cards
 
   def initialize
     @cards = []
-    @count = 0
   end
 
   def add_cards(item)
@@ -13,7 +12,7 @@ class Hand
   end
 
   def calculate_count
-    @count = @cards.reduce(0) do |t, j|
+    @cards.reduce(0) do |t, j|
       t += if %w[J Q K].include?(j.value)
              10
            elsif j.value == 'A' && t <= 10
