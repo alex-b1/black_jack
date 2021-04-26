@@ -13,8 +13,8 @@ class Deck
 
   def get_cards
     cards = []
-    Card.suits.each do |i|
-      Card.values.each do |j|
+    Card::SUITS.each do |i|
+      Card::VALUES.each do |j|
         cards.push(Card.new(i, j))
       end
     end

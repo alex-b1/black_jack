@@ -6,6 +6,10 @@ class Interface
   class << self
     include Helper
 
+    def list(item)
+      item.each { |k, v| puts "#{k} - #{v[:title]}" }
+    end
+
     def name
       print 'Ведите ваше имя: '
     end
@@ -38,8 +42,8 @@ class Interface
       'У дилера закончились деньги'
     end
 
-    def count(player)
-      puts "Сумма очков у #{player[:player].name}: #{player[:count]}"
+    def count(hand, player)
+      puts "Сумма очков у #{player.name}: #{hand.count}"
     end
 
     def win
@@ -54,19 +58,14 @@ class Interface
       puts 'Вы проиграли'
     end
 
-    def cards(player, type)
-      puts "Карты у #{player[:player].name}: "
-      if type == 'hide'
-        player[:cards].each { print '* ' }
+    def show_cards(hand, player)
+      puts "Карты у #{player.name}: "
+      if player.type == :dealer
+        hand.cards.each { print '* ' }
       else
-        player[:cards].each { |i| print "#{i.suit}-#{i.value} " }
+        hand.cards.each { |i| print "#{i.suit}-#{i.value} " }
       end
       print "\n"
-    end
-
-    def show_cards(hand)
-      cards hand.user, 'open'
-      cards hand.dealer, 'hide'
     end
 
     def error(e)

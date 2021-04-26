@@ -15,7 +15,7 @@ class Game
 
   MAX_COUNT = 21
 
-  attr_reader :user, :dealer, :deck, :bank, :hand
+  attr_reader :user, :dealer, :deck, :bank, :user_hand, :dealer_hand
 
   def initialize
     @command_list = {
@@ -39,16 +39,19 @@ class Game
 
   def start
     loop do
-      @hand = Hand.new(@user, @dealer)
+      @user_hand = Hand.new
+      @dealer_hand = Hand.new
       issue_cards
       place_bet
-      Interface.show_cards(hand)
+      Interface.show_cards(@user_hand, user)
+      Interface.show_cards(@dealer_hand, dealer)
 
       loop do
         break if check_cards_length
         break if user_actions == 3
         dealer_actions
-        Interface.show_cards(hand)
+        Interface.show_cards(@user_hand, user)
+        Interface.show_cards(@dealer_hand, dealer)
       rescue StandardError => e
         Interface.error(e)
         continue
@@ -66,7 +69,7 @@ class Game
   end
 
   def check_cards_length
-    hand.check_length
+    user_hand.cards.length == 3 && dealer_hand.cards.length == 3
   end
 
   def user_actions
@@ -77,7 +80,7 @@ class Game
   end
 
   def dealer_actions
-    if validate_cards_count hand.dealer
+    if validate_cards_count dealer_hand
       pass
     else
       add_card dealer
@@ -86,14 +89,15 @@ class Game
 
   def show_tasks
     Interface.action
-    @command_list.each { |k, v| puts "#{k} - #{v[:title]}" }
+    Interface.list @command_list
   end
 
   def issue_cards
     if validate_deck(@deck, 4)
-      hand.user[:cards].concat(@deck.cards.slice!(0, 2))
-      hand.dealer[:cards].concat(@deck.cards.slice!(0, 2))
-      hand.calculate_count
+      user_hand.add_cards(@deck.cards.slice!(0, 2))
+      dealer_hand.add_cards(@deck.cards.slice!(0, 2))
+      user_hand.calculate_count
+      dealer_hand.calculate_count
     else
       raise Interface.no_card
     end
@@ -120,11 +124,11 @@ class Game
   end
 
   def add_card(player)
-    hand_player = hand.send player.type
-    unless validate_cards_length(hand_player)
+    hand = player.type == :user ? user_hand : dealer_hand
+    unless validate_cards_length(hand)
       if validate_deck(@deck, 1)
         card = @deck.cards.slice!(0, 1)
-        hand.add_card(player.type, card)
+        hand.add_cards(card)
       else
         raise Interface.no_cards
       end
@@ -133,9 +137,9 @@ class Game
   end
 
   def open_cards
-    Interface.count hand.user
-    Interface.count hand.dealer
-    [hand.user[:count], hand.dealer[:count]]
+    Interface.count user_hand, user
+    Interface.count dealer_hand, dealer
+    [user_hand.count, dealer_hand.count]
   end
 
   def calculate_result

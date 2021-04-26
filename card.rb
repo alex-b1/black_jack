@@ -10,12 +10,4 @@ class Card
     @suit = suit
     @value = value
   end
-
-  def self.suits
-    SUITS
-  end
-
-  def self.values
-    VALUES
-  end
 end
